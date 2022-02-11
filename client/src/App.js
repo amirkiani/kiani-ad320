@@ -4,6 +4,7 @@ import './App.css';
 import Topbar from './components/Topbar/Topbar'
 import CardNavigation from './components/CardNavigation/CardNavigation';
 import FlashCard from './components/FlashCard/FlashCard';
+import Button from './components/Button/Button'
 
 function App() {
   return (
@@ -11,9 +12,14 @@ function App() {
     <Topbar />
     <div className = 'container'>
     <CardNavigation />
+    <div className='card-container'>
     <FlashCard  />
-
-
+    <div className='card-controls'>
+    <Button text="Back"/>
+    <Button text="Flip"/>
+    <Button text="Next"/>
+    </div>
+    </div>
     </div>
     </React.Fragment>
     
