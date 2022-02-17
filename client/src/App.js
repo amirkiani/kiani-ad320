@@ -1,10 +1,11 @@
 import React from 'react'
-import logo from './logo.svg';
 import './App.css';
 import Topbar from './components/Topbar/Topbar'
 import CardNavigation from './components/CardNavigation/CardNavigation';
 import FlashCard from './components/FlashCard/FlashCard';
 import Button from './components/Button/Button'
+
+const controls = ['Back', 'Flip', 'Next']
 
 function App() {
   return (
@@ -15,9 +16,14 @@ function App() {
     <div className='card-container'>
     <FlashCard  />
     <div className='card-controls'>
-    <Button text="Back"/>
-    <Button text="Flip"/>
-    <Button text="Next"/>
+      {controls.map((control) => {
+        return <Button>{control}</Button>
+      })}
+      <Button text="Back"/>
+      <Button text="Flip"/>
+      <Button text="Next"/>
+    
+    
     </div>
     </div>
     </div>

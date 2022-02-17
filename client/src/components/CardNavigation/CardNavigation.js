@@ -6,7 +6,9 @@ function CardNavigation() {
     return (
         <div className="card-nav">
         <ul>
-            {cardLinks = map()} => {}
+            {cardLinks.map((link) => {
+                return (<li>{link}</li>)
+            })}
         </ul>
         </div>
 
