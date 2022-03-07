@@ -1,8 +1,20 @@
 import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
+import { body } from 'express-validator'
 
-import { Deck } from './models/Deck.js'
+import {
+  deckById,
+  getDecks,
+  createDeck,
+  createCard,
+  deleteDeck,
+  updateDeck
+} from './handlers/decks.js'
+
+import {
+  getUsers
+} from './handlers/users.js'
 
 const app = express()
 const port = 8000
@@ -11,87 +23,57 @@ const port = 8000
 
 const connectionString = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.tqkxx.mongodb.net/notoreity?retryWrites=true&w=majority`
 try {
-  await mongoose.connect(connectionString)
+  await mongoose.connect(connectionString, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000
+  })
+  console.log('Connected to the database!')
 } catch (err) {
-  console.log('error ', err)
+  console.log('Cannot connect to the database!', err)
+  process.exit()
 }
-
 // Middleware
-
-const exampleMiddleware = (req, res, next) => {
-  console.log('example middleware')
-  next()
-}
 
 app.use(cors())
 app.use(express.json())
-app.use(exampleMiddleware)
 
 // Routes
 
-app.get('/', (req, res) => {
-  res.send('Hello, world!')
-})
-
-app.get('/decks/:id/cards', async (req, res) => {
-  const limit = req.query.limit
-  const deck = await Deck.findById(req.params.id)
-  if (deck) {
-    res.send(deck.cards.slice(0, 5))
-  } else {
-    res.sendStatus(404)
-  }
-})
-
-const cardsById = async (req, res) => {
-  const card = await Deck.findOne({
-    'cards._id': req.params.id
-  })
-  res.status(200).send(card)
+const notImplemented = (req, res) => {
+  res.status(503).send(`Route not defined for ${req.url}`)
 }
 
-app.get('/cards/:id', cardsById)
+// Deck Routes
+app.get('/decks', getDecks)
+app.get('/decks/:id', deckById)
+app.post(
+  '/decks',
+  body('name').not().isEmpty(),
+  createDeck
+)
+app.put(
+  '/decks/:id',
+  body('name').not().isEmpty(),
+  updateDeck
+)
+app.delete('/decks/:id', deleteDeck)
 
-const isUrl = (value) => {
-  const re = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/
-  return re.test(value)
-}
+app.post(
+  '/decks/:id/cards',
+  body('frontImage').isURL(),
+  body('frontText').not().isEmpty(),
+  body('backImage').isURL(),
+  body('backText').not().isEmpty(),
+  createCard
+)
 
-app.post('/cards', async (req, res) => {
-  const cardRequest = req.body
-  
-  if ((!cardRequest.frontImage && !cardRequest.frontText) || 
-    (!cardRequest.backImage && !cardRequest.backText)) {
-    res.status(400).send('Card data incomplete')
-  }
-
-  if ((frontImage && !isUrl(frontImage)) || (backImage && !isUrl(backImage))) {
-    res.status(400).send('Image fields must be valid URLs')
-  }
-
-  if (!cardRequest.deckId) {
-    res.status(400).send('Deck ID is required')
-  }
-
-  try {
-    const deck = await Deck.findById(cardRequest.deckId)
-    if (deck) {
-      deck.cards.push({
-        frontImage: cardRequest.frontImage,
-        frontText: cardRequest.frontText,
-        backImage: cardRequest.backImage,
-        backText: cardRequest.backText
-      })
-      await deck.save()
-      res.sendStatus(204)
-    } else {
-      res.sendStatus(404)
-    }
-  } catch (err) {
-    console.log(`error in creating card ${err}`)
-    res.sendStatus(502)
-  }
-})
+// User Routes
+app.get('/users', getUsers)
+app.get('/users/:id', notImplemented)
+app.post('/users', notImplemented)
+app.put('/users/:id', notImplemented)
+app.delete('/users/:id', notImplemented)
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}!`)
