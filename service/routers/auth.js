@@ -20,9 +20,8 @@ const register = async (req, res) => {
       res.status(400).send('That email is already registered')
     } else {
       const newUser = req.body
-      // We create an encrypted string that represents the password but
-      // is not the same as the password. This may only be decoded
-      // here with these tools
+
+
       newUser.password = await bcrypt.hash(req.body.password, 10)
       const savedUser = await User.create(newUser)
       res.status(200).send(savedUser._id)
@@ -75,17 +74,25 @@ authRouter.post('/register', register)
 export default authRouter
 
 export const verifyToken = async (req, res, next) => {
+  if (!req.headers.authorization) {
+    res.status(400).send('No authentication information provided')
+  }
+
   const authParts = req.headers.authorization.split(' ')
   if (authParts[0] !== 'Bearer' || authParts.length < 2) {
     res.status(400).send('Bad authentication token')
   } else if (authParts[1]) {
-    const decoded = await jwt.verify(authParts[1], process.env.JWT_SECRET)
-    req.user = {
-      userId: decoded.user,
-      other: decoded.otherData
-    }
-    next()
+    try {
+      const decoded = await jwt.verify(authParts[1], process.env.JWT_SECRET)
+      req.user = {
+        userId: decoded.user,
+        other: decoded.otherData
+      }
+      next()
+    } catch (error) {
+      res.status(401).send('Authentication failed')
+    }    
   } else {
-    res.status(401).send('Authentication failed')
+    res.status(400).send('Bad token')
   }
 }
